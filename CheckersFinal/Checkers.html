@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table{ border: 3px solid black ;
+		 border-collapse:collapse;
+		 border-color: black;
+		 margin: auto;
+		 }
+		img
+		{
+			width: 50px;
+			height: 50px;
+			margin: 0 auto;
+		}
+		
+		td
+		{
+			width: 70px;
+			height: 70px;
+			text-align: center;
+		}
+		
+		tr
+		{
+			margin: 0px;
+		}
+		
+		tr:nth-child(odd) td:nth-child(odd)
+		{background: #DCDCDC;}
+		tr:nth-child(even) td:nth-child(even)
+		{background: #DCDCDC;}
+		
+		tr:nth-child(odd) td:nth-child(even)
+		{background: #333333 ;}
+		tr:nth-child(even) td:nth-child(odd)
+		{background: #333333;}
+		
+		.header {
+     background: url(banner.png); 
+     border: 1px black;
+     width:600px;
+     height:130px;
+	 margin: 0 auto;    
+    }
+		
+    </style>
+<title>Checkers</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script>
+	//How Player system will work
+			var play1, play2;
+			var tempplayer1, tempplayer2,player1,player2;
+			var pieces1 = 12;
+			var pieces2 = 12;
+			$(document).ready(function()
+			{
+				tempplayer1 = prompt("Enter Player 1: ", "your name here");
+				while(tempplayer1===null)
+				{	
+					window.alert("Please Enter a Name");
+					tempplayer1 = prompt("Enter Player 1: ", "your name here");
+				}
+				player1=tempplayer1;
+				
+				tempplayer2 = prompt("Enter Player 2: ", "your name here");
+				while(tempplayer2===null)
+				{
+					window.alert("Please Enter a Name");
+					tempplayer2 = prompt("Enter Player 2: ", "your name here");
+				}
+				player2=tempplayer2;
+				
+				$("#players1").html(player1+" is "+"<img src= 'red.gif'/>");
+				$("#players2").html(player2+" is "+"<img src= 'blue.png'/>");
+				play1 = true;
+				play2 = false;
+				$("#here").html(player1 + "'s turn");
+				Board();
+			});
+
+
+//Initial Board
+	var board;
+	function Board(){
+		board = [];
+		for (var i = 0; i <= 7; i++)
+		{
+		    board[i] = [];
+			for (var j = 0; j <= 7; j++)	
+			{
+			 // 1 = orange, 0 = empty, -1 = blue, 2 = blue king, 3 = orange king
+		
+			if(i <= 2)
+				{
+					if(i % 2 === 0 && j % 2 === 0)
+						board[i][j] = 1; 
+			
+					if(i % 2 !== 0 && j % 2 === 0)
+						board[i][j] = 0;
+			
+					if(i % 2 === 0 && j % 2 !== 0)
+						board[i][j] = 0;
+			
+					if(i % 2 !== 0 && j % 2 !== 0)
+						board[i][j] = 1;
+				}
+
+
+				else if(i >= 5)
+				{
+					if(i % 2 === 0 && j % 2 === 0)
+						board[i][j] = -1;
+			
+					if(i % 2 === 0 && j % 2 !== 0)
+						board[i][j] = 0;
+				
+					if(i % 2 !== 0 && j % 2 === 0)
+						board[i][j] = 0;
+			
+					if(i % 2 !== 0 && j % 2 !== 0)
+						board[i][j] = -1;
+				}
+				else
+					board[i][j] = 0;
+			}
+		}
+	}
+
+
+//Actual Movement of Pieces
+var val = "-2";
+var a, b;
+var flag;
+var eliminate1, eliminate2, eliminate3, eliminate4;
+
+/*
+	eliminate1, eliminate2 are for standard pieces and king pieces (forward movement)
+	eliminate3, eliminate4 are for king pieces (backward movement)
+	flag shows whether a piece will move or not
+*/
+
+	function start(x,y)
+	{
+		var i = x.toString();
+		var j = y.toString();
+		var tot = i + j;        //Identifies space id
+
+			//Handles selecting and de-selecting spaces
+			//val is the old space of a piece
+			//tot is the new space of a piece
+			
+			if(val == "-2")
+			{
+				if(board[x][y] === 0)
+				{
+					document.getElementById(tot).style.background="#DCDCDC";
+				}
+				else
+				{
+					if((play1 && board[x][y] == 1) || (play2 && board[x][y] == -1) || (play1 && board[x][y] == 3) || (play2 && board[x][y] == 2))
+					{						
+							a = x;
+							b = y;
+							document.getElementById(tot).style.background="black";
+							val = tot;
+					}
+				}
+			}
+			else if(val != "-2" && val != tot)
+			{
+				if(board[x][y] === 0)
+				{
+					king(x);
+					move(x, y);
+					if(flag)
+					{
+						document.getElementById(val).style.background="#DCDCDC";
+						if(board[a][b] == 1)
+						{
+							document.getElementById(tot).innerHTML="<img src= 'red.gif'/>";
+							document.getElementById(val).innerHTML="";
+							val="-2";
+							board[x][y] = 1;
+							board[a][b] = 0;
+							play2 = true;
+							play1 = false;
+								
+							if(eliminate1)
+							{
+								document.getElementById((x-1).toString() + (y-1).toString()).innerHTML="";
+								board[x-1][y-1] = 0;
+								pieces2 -= 1;
+								check(x,y);	
+							}
+							
+							else if(eliminate2)
+							{
+								document.getElementById((x-1).toString() + (y+1).toString()).innerHTML="";
+								board[x-1][y+1] = 0;
+								pieces2 -= 1;
+								check(x,y);	
+							}									
+						}
+						
+						else if(board[a][b] == -1)
+						{
+							document.getElementById(tot).innerHTML="<img src= 'blue.png'/>";
+							document.getElementById(val).innerHTML="";
+							val="-2";
+							board[x][y] = -1;
+							board[a][b] = 0;
+							play1 = true;
+							play2 = false;
+							if(eliminate1)
+							{
+								document.getElementById((x+1).toString() + (y-1).toString()).innerHTML="";
+								board[x+1][y-1] = 0;
+								pieces1 -= 1;
+								check(x,y);
+							}
+							else if(eliminate2)
+							{
+								document.getElementById((x+1).toString() + (y+1).toString()).innerHTML="";
+								board[x+1][y+1] = 0;
+								pieces1 -= 1;
+								check(x,y);	
+							}
+						}
+								
+						else if(board[a][b] == 2)
+						{
+							document.getElementById(tot).innerHTML="<img src= 'blueking.png'/>";
+							document.getElementById(val).innerHTML="";
+							val="-2";
+							board[x][y] = 2;
+							board[a][b] = 0;
+							play1 = true;
+							play2 = false;
+								
+							if(eliminate1)
+							{
+								document.getElementById((x-1).toString() + (y-1).toString()).innerHTML="";
+								board[x-1][y-1] = 0;
+								pieces1 -= 1;
+								check(x,y);	
+							}
+								
+							else if(eliminate2)
+							{
+								document.getElementById((x-1).toString() + (y+1).toString()).innerHTML="";
+								board[x-1][y+1] = 0;
+								pieces1 -= 1;
+								check(x,y);	
+							}
+							else if(eliminate3)
+							{
+								document.getElementById((x+1).toString() + (y-1).toString()).innerHTML="";
+								board[x+1][y-1] = 0;
+								pieces1 -= 1;
+								check(x,y);	
+							}
+							else if(eliminate4)
+							{
+								document.getElementById((x+1).toString() + (y+1).toString()).innerHTML="";
+								board[x+1][y+1] = 0;
+								pieces1 -= 1;
+								check(x,y);	
+							}
+						}
+							
+						else if(board[a][b] == 3)
+						{
+							document.getElementById(tot).innerHTML="<img src= 'redking.png'/>";
+							document.getElementById(val).innerHTML="";
+							val="-2";
+							board[x][y] = 3;
+							board[a][b] = 0;
+							play2 = true; 
+							play1 = false;
+								
+							if(eliminate1)
+							{
+								document.getElementById((x-1).toString() + (y-1).toString()).innerHTML="";
+								board[x-1][y-1] = 0;
+								pieces2 -= 1;
+								check(x,y);	
+							}
+							else if(eliminate2)
+							{
+								document.getElementById((x-1).toString() + (y+1).toString()).innerHTML="";
+								board[x-1][y+1] = 0;
+								pieces2 -= 1;
+								check(x,y);	
+							}
+							else if(eliminate3)
+							{
+								document.getElementById((x+1).toString() + (y-1).toString()).innerHTML="";
+								board[x+1][y-1] = 0;
+								pieces2 -= 1;
+								check(x,y);	
+							}
+							else if(eliminate4)
+							{
+								document.getElementById((x+1).toString() + (y+1).toString()).innerHTML="";
+								board[x+1][y+1] = 0;
+								pieces2 -= 1;
+								check(x,y);	
+							}
+						}
+					}
+					else
+					{
+						
+					}
+						
+				}
+				else
+				{
+					if(board[a][b]==board[x][y])
+					{
+						document.getElementById(val).style.background="#DCDCDC";
+						document.getElementById(tot).style.background="black";
+						a = x;
+						b = y;
+						val = tot;
+					}
+				}
+			}
+			else
+			{
+				document.getElementById(val).style.background="#DCDCDC";
+				val = "-2";
+			}
+		
+			if(pieces1 !== 0 && pieces2 !== 0)
+			{
+				if(play1)
+				{
+					document.getElementById("here").innerHTML=player1+"'s Turn";
+				}
+				else if(play2)
+				{
+					document.getElementById("here").innerHTML=player2+"'s Turn";
+				}	
+			}
+			else
+			{
+				won();
+			}
+			
+			block();
+			var blocktemp1=blocked1.every(Boolean);
+			var blocktemp2=blocked2.every(Boolean);
+			if(blocktemp1)
+			{
+				document.getElementById("here").innerHTML=player1+" Won";
+				play1=false;
+				play2=false;
+				
+			}
+			else if(blocktemp2)
+			{
+				document.getElementById("here").innerHTML=player2+" Won";
+				play2=false;
+				play1=false;
+			}
+	}
+		
+		//This is the code for Double jump
+	function check(x,y)
+	{
+				if(x <= 5 && 2 <= y <= 5 && board[x][y] == 1)
+				{
+					if((board[x+2][y+2] === 0 && (board[x+1][y+1] == -1 || board[x+1][y+1] == 2)&&board[x+2][y-2] === 0 )&&((board[x+1][y-1] == -1 || board[x+1][y-1] == 2)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+
+					else if(board[x+2][y+2] === 0 && (board[x+1][y+1] == -1 || board[x+1][y+1] == 2))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString() + y.toString();
+						play1 = true;
+						play2 = false;
+						start(x+2,y+2);
+						window.alert("Double Jump Time");
+					}
+					
+					else if(board[x+2][y-2] === 0 && (board[x+1][y-1] == -1 || board[x+1][y-1] == 2))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString() + y.toString();
+						play1 = true;
+						play2 = false;
+						start(x+2,y-2);
+						window.alert("Double Jump Time");
+					}
+				}
+				else if(x >= 2 && 2 <= y <= 5 && board[x][y] == -1)
+				{
+					if((board[x-2][y+2] === 0 && (board[x-1][y+1] == 1||board[x-1][y+1] == 3)) && (board[x-2][y-2] === 0 && (board[x-1][y-1] == 1||board[x-1][y-1] == 3)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					else if(board[x-2][y+2] === 0 && (board[x-1][y+1] == 1||board[x-1][y+1] == 3))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString() + y.toString();
+						play1 = false;
+						play2 = true;
+						start(x-2,y+2);
+						window.alert("Double Jump Time");
+					}
+					else if(board[x-2][y-2] === 0 && (board[x-1][y-1] == 1||board[x-1][y-1] == 3))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString() + y.toString();
+						play1 = false;
+						play2 = true;
+						start(x-2,y-2);
+						window.alert("Double Jump Time");
+					}
+				}
+				else if(x <= 5 && x >= 2 && 2 <= y && y <= 5 && board[x][y] == 3)
+				{
+					if((board[x+2][y+2] === 0 && (board[x+1][y+1] == -1 || board[x+1][y+1] == 2))&&(board[x+2][y-2] === 0 && (board[x+1][y-1] == -1 || board[x+1][y-1] == 2)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					
+					else if((board[x+2][y-2] === 0 && (board[x+1][y-1] == -1 || board[x+1][y-1] == 2))&&(board[x-2][y+2] === 0 && (board[x-1][y+1] == -1 || board[x-1][y+1] == 2)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					else if((board[x-2][y-2] === 0 && (board[x-1][y-1] == -1 || board[x-1][y-1] == 2))&&(board[x-2][y+2] === 0 && (board[x-1][y+1] == -1 || board[x-1][y+1] == 2)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					
+					else if((board[x+2][y+2] === 0 && (board[x+1][y+1] == -1 || board[x+1][y+1] == 2))&&(board[x-2][y-2] === 0 && (board[x-1][y-1] == -1 || board[x-1][y-1] == 2)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					
+					else if(board[x+2][y+2] === 0 && (board[x+1][y+1] == -1 || board[x+1][y+1] == 2))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x+2,y+2);
+						window.alert("Double Jump Time");
+					}
+					
+					else if(board[x+2][y-2] === 0 && (board[x+1][y-1] == -1 || board[x+1][y-1] == 2))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x+2,y-2);
+						window.alert("Double Jump Time");
+					}
+					
+					else if(board[x-2][y+2] === 0 && (board[x-1][y+1] == -1 || board[x-1][y+1] == 2))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x-2,y+2);
+						window.alert("Double Jump Time");
+					}
+					else if(board[x-2][y-2] === 0 && (board[x-1][y-1] == -1 || board[x-1][y-1] == 2))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x-2,y-2);
+						window.alert("Double Jump Time");
+					}
+				}
+				
+				else if(x <= 5 && x >= 2 && 2 <= y && y <= 5 && board[x][y] == 2)
+				{
+					if((board[x+2][y+2] === 0 && (board[x+1][y+1] == 1 || board[x+1][y+1] == 3))&&(board[x+2][y-2] === 0 && (board[x+1][y-1] == 1 || board[x+1][y-1] == 3)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					
+					else if((board[x+2][y-2] === 0 && (board[x+1][y-1] == 1 || board[x+1][y-1] == 3))&&(board[x-2][y+2] === 0 && (board[x-1][y+1] == 1 || board[x-1][y+1] == 3)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					else if((board[x-2][y-2] === 0 && (board[x-1][y-1] == 1 || board[x-1][y-1] == 3))&&(board[x-2][y+2] === 0 && (board[x-1][y+1] == 1 || board[x-1][y+1] == 3)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					
+					else if((board[x+2][y+2] === 0 && (board[x+1][y+1] == 1 || board[x+1][y+1] == 3))&&(board[x-2][y-2] === 0 && (board[x-1][y-1] == 1 || board[x-1][y-1] == 3)))
+					{
+						play1=true;
+						play2=false;
+						a = x;
+						b = y;
+						val=x.toString()+y.toString();
+						document.getElementById(val).style.background="black";
+						window.alert("Choose Your Double Jump path");
+					}
+					
+					else if(board[x+2][y+2] === 0 && (board[x+1][y+1] == 1 || board[x+1][y+1] == 3))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x+2,y+2);
+						window.alert("Double Jump Time");
+					}
+					
+					else if(board[x+2][y-2] === 0 && (board[x+1][y-1] == 1 || board[x+1][y-1] == 3))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x+2,y-2);
+						window.alert("Double Jump Time");
+					}
+					
+					else if(board[x-2][y+2] === 0 && (board[x-1][y+1] == 1 || board[x-1][y+1] == 3))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x-2,y+2);
+						window.alert("Double Jump Time");
+					}
+					else if(board[x-2][y-2] === 0 && (board[x-1][y-1] == 1 || board[x-1][y-1] == 3))
+					{
+						document.getElementById(x.toString() + y.toString()).style.background="black";
+						a = x;
+						b = y;
+						val = x.toString()+y.toString();
+						play1 = true;
+						play2 = false;
+						start(x-2,y-2);
+						window.alert("Double Jump Time");
+					}	
+				}
+	}
+	
+	//if either player has 0 pieces left, call this function
+	function won()
+	{
+		if(pieces1 > pieces2)
+		{
+			document.getElementById("here").innerHTML=player1+" Won"+"</br><button onclick='newgame()'>Start Again</button>";
+			play1=false;
+			play2=false;
+		}
+		else
+		{
+			document.getElementById("here").innerHTML=player2+" Won"+"</br><button onclick='newgame()'>Start Again</button>";
+			play1=false;
+			play2=false;
+		}
+	}
+	
+	function newgame()
+	{
+		 window.location = document.URL;
+	}
+	
+var row,col;
+var blocked1=[];
+var blocked2=[];
+
+//to check whether the pieces of either player are blocked
+function block()
+{
+	var temp1=0;
+	var temp2=0;
+	for(row=0;row<=7;row++)
+	{
+		for(col=0;col<=7;col++)
+		{
+			if((board[row][col]==-1&&board[row-1][col+1]!==0&&board[row-1][col-1]!==0&&board[row-2][col+2]!==0&&board[row-2][col-2]!==0) || (board[row][col]==2&&board[row-1][col+1]!==0&&board[row-1][col-1]!==0&&board[row+1][col+1]!==0&&board[row+1][col-1]!==0&&board[row-2][col+2]!==0&&board[row-2][col-2]!==0&&board[row+2][col+2]!==0&&board[row+2][col-2]!==0))
+			{
+					blocked1[temp1]=true;
+					temp1++;
+			}
+			else if(board[row][col]==-1||board[row][col]==2)
+			{
+				blocked1[temp1]=false;
+					temp1++;
+			}
+			if((board[row][col]==1&&board[row+1][col+1]!==0&&board[row+1][col-1]!==0&&board[row+2][col+2]!==0&&board[row+2][col-2]!==0) || (board[row][col]==3&&board[row-1][col+1]!==0&&board[row-1][col-1]!==0&&board[row+1][col+1]!==0&&board[row+1][col-1]!==0&&board[row-2][col+2]!==0&&board[row-2][col-2]!==0&&board[row+2][col+2]!==0&&board[row+2][col-2]!==0))
+			{
+					blocked2[temp2]=true;
+					temp2++;
+			}
+			else if(board[row][col]==1||board[row][col]==3)
+			{
+				blocked2[temp2]=false;
+					temp2++;
+			}
+		}
+	}
+}
+
+//Foundation for the pieces
+//Move checks if it's a valid move...
+	function move(r,c)
+	{
+		if(board[a][b] == 1)
+		{
+			if(r == a+1 && (c == b-1 || c == b+1))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+			}
+			
+			else if(r == a+2 && c == b+2 && (board[r-1][c-1] == -1 || board[r-1][c-1] == 2))
+			{
+				flag = true;
+				eliminate1 = true;
+				eliminate2 = false;
+			}
+			
+			else if(r == a+2 && c == b-2 && (board[r-1][c+1] == -1 || board[r-1][c+1] == 2))
+			{
+				flag = true;
+				eliminate2 = true;
+				eliminate1 = false;
+			}
+			
+			else
+			{
+				flag = false;
+				eliminate1 = false;
+				eliminate2 = false;
+			}
+		}
+	
+		else if(board[a][b] == -1)
+		{
+			if(r == a-1 && (c == b-1 || c == b+1))
+			{		
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+			}
+			
+			else if(r == a-2 && c == b+2 && (board[r+1][c-1] == 1 || board[r+1][c-1] == 3))
+			{
+				flag = true;
+				eliminate1 = true;
+				eliminate2 = false;
+			}
+		
+			else if(r == a-2 && c == b-2 && (board[r+1][c+1] == 1 || board[r+1][c+1] == 3))
+			{
+				flag = true;
+				eliminate2 = true;
+				eliminate1 = false;
+			}
+			
+			else
+			{
+				flag = false;
+				eliminate1 = false;
+				eliminate2 = false;
+			}
+		}
+		
+		//blue King 
+		else if(board[a][b] == 2)
+		{
+			if((r == a-1 || r == a+1) && (c == b-1 || c == b+1))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+			
+			else if(r == a+2 && c == b+2 && (board[r-1][c-1] == 1 || board[r-1][c-1] == 3))
+			{
+				flag = true;
+				eliminate1 = true;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+		
+			else if(r == a+2 && c == b-2 && (board[r-1][c+1] == 1 || board[r-1][c+1] == 3))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = true;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+			
+			else if(r == a-2 && c == b+2 && (board[r+1][c-1] == 1 || board[r+1][c-1] == 3))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = true;
+				eliminate4 = false;
+			}
+			
+			else if(r == a-2 && c == b-2 && (board[r+1][c+1] == 1 || board[r+1][c+1] == 3))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = true;
+			}
+			else
+			{
+				flag = false;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+		}
+	
+		//Orange King
+		else if(board[a][b] == 3)
+		{
+			if((r == a-1 || r == a+1) && (c == b-1 || c == b+1))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+			
+			else if(r == a+2 && c == b+2 && (board[r-1][c-1] == -1 || board[r-1][c-1] == 2))
+			{
+				flag = true;
+				eliminate1 = true;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+			else if(r == a+2 && c == b-2 && (board[r-1][c+1] == -1||board[r-1][c+1] == 2))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = true;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+			else if(r == a-2 && c == b+2 && (board[r+1][c-1] == -1 || board[r+1][c-1] == 2))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = true;
+				eliminate4 = false;
+			}
+			else if(r == a-2 && c == b-2 && (board[r+1][c+1] == -1 || board[r+1][c+1] == 2))
+			{
+				flag = true;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = true;
+			}
+			else
+			{
+				flag = false;
+				eliminate1 = false;
+				eliminate2 = false;
+				eliminate3 = false;
+				eliminate4 = false;
+			}
+		}
+	}
+
+
+	// For the King Piece 
+	function king(x)
+	{
+		if(x === 0 && board[a][b] == -1)
+		{
+			//changes the top-most row values to 2
+			board[a][b] = 2;
+		}
+		else if(x == 7 && board[a][b] == 1)
+		{
+			//changes the bottom-most row values to 3
+			board[a][b] = 3;
+		}
+	}
+	
+</script>
+</head>
+<body background="background8.jpg">
+
+<body>
+	
+    <div class="header"></div>
+	<div align="right" id="players1" style="color: white;float: right;width: 150px;height: 40px;margin: 10px;font-family: sans-serif;font-size: 1em"></div>
+	<div align="left" id="here" style="color: white;float: left;width: 150px;height: 40px;margin: 30px;font-family: sans-serif;font-size: 2em"></div>
+	<div align="right" id="players2" style="color: white;float: right;width: 150px;height: 40px;margin: 10px;font-family: sans-serif;font-size: 1em"></div>
+	
+    <table>
+		<tbody id="result">
+      <tr>
+		<td id=00 onclick="start(0,0);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=02 onclick="start(0,2);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=04 onclick="start(0,4);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=06 onclick="start(0,6);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+	  </tr>
+	  
+	  <tr>
+		<td>&nbsp</td>
+		<td id=11 onclick="start(1,1);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=13 onclick="start(1,3);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=15 onclick="start(1,5);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=17 onclick="start(1,7);"><img src="red.gif"></td>
+	  </tr>
+	  <tr>
+		<td id=20 onclick="start(2,0);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=22 onclick="start(2,2);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=24 onclick="start(2,4);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+		<td id=26 onclick="start(2,6);"><img src="red.gif"></td>
+		<td>&nbsp</td>
+	  </tr>
+	  <tr>
+		<td>&nbsp</td>
+		<td id="31" onclick="start(3,1);"></td>
+		<td>&nbsp</td>
+		<td id="33" onclick="start(3,3);"></td>
+		<td>&nbsp</td>
+		<td id="35" onclick="start(3,5);"></td>
+		<td>&nbsp</td>
+		<td id="37" onclick="start(3,7);"></td>
+	  </tr>
+	  <tr>
+		<td id=40 onclick="start(4,0);">&nbsp</td>
+		<td>&nbsp</td>
+		<td id=42 onclick="start(4,2);">&nbsp</td>
+		<td>&nbsp</td>
+		<td id=44 onclick="start(4,4);">&nbsp</td>
+		<td>&nbsp</td>
+		<td id=46 onclick="start(4,6);">&nbsp</td>
+		<td>&nbsp</td>
+	  </tr>
+	 <tr>
+		<td>&nbsp</td>
+		<td id=51 onclick="start(5,1);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=53 onclick="start(5,3);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=55 onclick="start(5,5);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=57 onclick="start(5,7);"><img src="blue.png"></td>
+	  </tr>
+			   
+		 <tr>
+		<td id=60 onclick="start(6,0);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=62 onclick="start(6,2);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=64 onclick="start(6,4);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=66 onclick="start(6,6);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+	   </tr>
+	
+	   <tr>
+		<td>&nbsp</td>
+		<td id=71 onclick="start(7,1);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=73 onclick="start(7,3);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=75 onclick="start(7,5);"><img src="blue.png"></td>
+		<td>&nbsp</td>
+		<td id=77 onclick="start(7,7);"><img src="blue.png"></td>
+	  </tr>
+	   </tbody>
+    </table>
+	
+</body>
+</html>
